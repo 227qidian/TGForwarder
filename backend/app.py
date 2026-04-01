@@ -1,10 +1,15 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 import os
+import sys
 import json
 import subprocess
 import threading
 import time
 import signal
+
+# 添加项目根目录到 Python 路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from config.config import config
 
 app = Flask(__name__)
@@ -133,3 +138,6 @@ def get_output(script):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
+
+# 导出 app 供 Gunicorn 使用
+application = app
