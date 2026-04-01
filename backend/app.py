@@ -4,7 +4,7 @@ import json
 import subprocess
 import threading
 import time
-import psutil
+import signal
 from config.config import config
 
 app = Flask(__name__)
@@ -38,7 +38,7 @@ def start_forwarder():
         script_status['forwarder']['output'] = []
         
         process = subprocess.Popen(
-            ['python', 'TGForwarder.py'],
+            ['python3', 'TGForwarder.py'],
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -65,12 +65,13 @@ def stop_forwarder():
         return jsonify({'status': 'error', 'message': '脚本未运行'})
     
     try:
-        process = psutil.Process(script_status['forwarder']['pid'])
-        process.terminate()
-        script_status['forwarder']['running'] = False
-        return jsonify({'status': 'success'})
-    except:
-        return jsonify({'status': 'error', 'message': '停止失败'})
+        pid = script_status['forwarder']['pid']
+        if pid:
+            os.kill(pid, signal.SIGTERM)
+            script_status['forwarder']['running'] = False
+            return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': '停止失败: ' + str(e)})
 
 # 启动链接检测脚本
 @app.route('/start_link_checker')
@@ -83,7 +84,7 @@ def start_link_checker():
         script_status['link_checker']['output'] = []
         
         process = subprocess.Popen(
-            ['python', 'TGNetDiskLinkChecker.py'],
+            ['python3', 'TGNetDiskLinkChecker.py'],
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -110,12 +111,13 @@ def stop_link_checker():
         return jsonify({'status': 'error', 'message': '脚本未运行'})
     
     try:
-        process = psutil.Process(script_status['link_checker']['pid'])
-        process.terminate()
-        script_status['link_checker']['running'] = False
-        return jsonify({'status': 'success'})
-    except:
-        return jsonify({'status': 'error', 'message': '停止失败'})
+        pid = script_status['link_checker']['pid']
+        if pid:
+            os.kill(pid, signal.SIGTERM)
+            script_status['link_checker']['running'] = False
+            return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': '停止失败: ' + str(e)})
 
 # 获取脚本状态
 @app.route('/get_status')
@@ -130,4 +132,4 @@ def get_output(script):
     return jsonify({'output': []})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
